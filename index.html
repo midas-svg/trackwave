@@ -375,29 +375,49 @@ function startTracking() {
   if (marker) { map.removeLayer(marker); marker = null; }
   if (circle) { map.removeLayer(circle); circle = null; }
 
+  // Buffer de lissage (moyenne glissante sur 4 points bruts)
+  let rawBuffer = [];
+
   // Écoute continue du GPS
   watchId = navigator.geolocation.watchPosition(pos => {
     const {latitude: lat, longitude: lon, accuracy: acc, speed} = pos.coords;
     currentLat = lat; currentLon = lon;
-    trackPoints.push([lat, lon]);
 
-    // Calcul distance
-    if (lastLat !== null) {
-      const d = haversine(lastLat, lastLon, lat, lon);
-      if (d > 2) { // filtre anti-bruit : ignore si < 2m
-        totalDistance += d;
-        document.getElementById('distVal').textContent = formatDistance(totalDistance);
-      }
+    // 1. Rejeter si précision GPS trop faible (> 30m = signal trop imprécis)
+    if (acc > 30) {
+      document.getElementById('mapLabel').textContent = 'Signal faible (' + Math.round(acc) + 'm)...';
+      updateCards(lat, lon, acc, speed);
+      return;
     }
-    lastLat = lat; lastLon = lon;
 
-    // Tracé du parcours
+    // 2. Lissage : moyenne glissante sur les 4 derniers points bruts
+    rawBuffer.push([lat, lon]);
+    if (rawBuffer.length > 4) rawBuffer.shift();
+    const smoothLat = rawBuffer.reduce((s, p) => s + p[0], 0) / rawBuffer.length;
+    const smoothLon = rawBuffer.reduce((s, p) => s + p[1], 0) / rawBuffer.length;
+
+    // 3. Filtre distance minimale : n'ajoute un point que si déplacement réel >= 8m
+    const MIN_DIST = 8;
+    if (lastLat !== null) {
+      const d = haversine(lastLat, lastLon, smoothLat, smoothLon);
+      if (d < MIN_DIST) {
+        // Pas assez de mouvement — on met à jour les cards mais pas le tracé
+        updateCards(lat, lon, acc, speed);
+        return;
+      }
+      totalDistance += d;
+      document.getElementById('distVal').textContent = formatDistance(totalDistance);
+    }
+
+    lastLat = smoothLat; lastLon = smoothLon;
+    trackPoints.push([smoothLat, smoothLon]);
+
+    // Tracé du parcours (points lissés uniquement)
     if (polyline) map.removeLayer(polyline);
     polyline = L.polyline(trackPoints, {
       color: '#f06292',
       weight: 4,
-      opacity: 0.85,
-      dashArray: null,
+      opacity: 0.9,
       lineJoin: 'round'
     }).addTo(map);
 
@@ -410,8 +430,8 @@ function startTracking() {
 
     // Marqueur position actuelle
     if (marker) map.removeLayer(marker);
-    marker = L.marker([lat, lon], {icon: trackIcon}).addTo(map);
-    map.panTo([lat, lon], {animate: true});
+    marker = L.marker([smoothLat, smoothLon], {icon: trackIcon}).addTo(map);
+    map.panTo([smoothLat, smoothLon], {animate: true});
 
     updateCards(lat, lon, acc, speed);
     addHistory(lat, lon);
