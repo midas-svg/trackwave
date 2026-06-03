@@ -9,16 +9,35 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCmOaq9JRXgNl3EhgHfTlWEt1ZmuvpFq3g",
+  authDomain: "trackwave-b4f13.firebaseapp.com",
+  databaseURL: "https://trackwave-b4f13-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "trackwave-b4f13",
+  storageBucket: "trackwave-b4f13.firebasestorage.app",
+  messagingSenderId: "847022082083",
+  appId: "1:847022082083:web:33ce530c016d0f366ec996"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+window._fbDb = db;
+window._fbRef = ref;
+window._fbSet = set;
+window._fbOnValue = onValue;
+window._fbRemove = remove;
+window._fbReady = true;
+window.dispatchEvent(new Event('firebase-ready'));
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#080b14;color:#e8eaf6;font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
-:root{
-  --neon:#7c6ef7;
-  --neon2:#f06292;
-  --neon3:#4dd0e1;
-  --card-bg:rgba(255,255,255,0.04);
-  --card-border:rgba(124,110,247,0.2);
-}
+:root{--neon:#7c6ef7;--neon2:#f06292;--neon3:#4dd0e1;--card-bg:rgba(255,255,255,0.04);--card-border:rgba(124,110,247,0.2)}
 .bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.18}
 .orb1{width:500px;height:500px;background:#7c6ef7;top:-100px;left:-150px;animation:drift1 12s ease-in-out infinite}
@@ -28,7 +47,7 @@ body{background:#080b14;color:#e8eaf6;font-family:'Syne',sans-serif;min-height:1
 @keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,-40px)}}
 @keyframes drift3{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,25px)}}
 .container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:24px 20px}
-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:12px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#7c6ef7,#f06292);display:flex;align-items:center;justify-content:center}
 .logo-text{font-size:22px;font-weight:800;background:linear-gradient(135deg,#7c6ef7,#f06292);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
@@ -37,19 +56,30 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .dot.tracking{background:#f06292;animation:pulse-track 0.8s ease-in-out infinite}
 @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
 @keyframes pulse-track{0%,100%{opacity:1;transform:scale(1.3)}50%{opacity:0.5;transform:scale(0.8)}}
+
+/* Mode viewer */
+.viewer-banner{background:rgba(77,208,225,0.08);border:1px solid rgba(77,208,225,0.3);border-radius:16px;padding:16px 20px;margin-bottom:20px;display:none;align-items:center;gap:14px}
+.viewer-banner.visible{display:flex}
+.viewer-icon{width:36px;height:36px;border-radius:10px;background:rgba(77,208,225,0.15);display:flex;align-items:center;justify-content:center;color:#4dd0e1;font-size:18px;flex-shrink:0}
+.viewer-text{flex:1}
+.viewer-title{font-size:14px;font-weight:700;color:#4dd0e1;margin-bottom:2px}
+.viewer-sub{font-size:12px;color:rgba(232,234,246,0.4);font-family:'Space Mono',monospace}
+.btn-alarm-remote{background:rgba(240,98,146,0.12);border:1px solid rgba(240,98,146,0.3);border-radius:10px;padding:10px 16px;color:#f06292;cursor:pointer;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;transition:all 0.2s;flex-shrink:0}
+.btn-alarm-remote:hover{background:rgba(240,98,146,0.2)}
+.btn-alarm-remote.active{background:rgba(240,98,146,0.25);animation:ring-pulse 0.6s ease-in-out infinite alternate}
+
 .map-wrapper{border-radius:20px;overflow:hidden;border:1px solid var(--card-border);position:relative;margin-bottom:24px;box-shadow:0 0 40px rgba(124,110,247,0.15)}
-#map{height:380px;width:100%}
+#map{height:360px;width:100%}
 .map-overlay{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;border-radius:20px;box-shadow:inset 0 0 60px rgba(8,11,20,0.5)}
 .map-label{position:absolute;top:16px;left:16px;background:rgba(8,11,20,0.85);border:1px solid var(--card-border);border-radius:10px;padding:8px 14px;font-size:12px;font-family:'Space Mono',monospace;color:var(--neon);backdrop-filter:blur(10px);z-index:500}
 .track-badge{position:absolute;top:16px;right:16px;background:rgba(240,98,146,0.15);border:1px solid rgba(240,98,146,0.4);border-radius:10px;padding:8px 14px;font-size:12px;font-family:'Space Mono',monospace;color:#f06292;backdrop-filter:blur(10px);z-index:500;display:none;align-items:center;gap:6px}
 .track-badge.visible{display:flex}
 .track-dot{width:7px;height:7px;border-radius:50%;background:#f06292;animation:pulse-track 0.8s ease-in-out infinite}
-.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px}
-.card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:20px;transition:all 0.3s ease;position:relative;overflow:hidden}
-.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(124,110,247,0.06),transparent);border-radius:16px;opacity:0;transition:opacity 0.3s}
-.card:hover::before{opacity:1}
+
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:18px;transition:all 0.3s ease;position:relative;overflow:hidden}
 .card:hover{border-color:rgba(124,110,247,0.4);transform:translateY(-2px)}
-.card-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px}
+.card-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:10px}
 .card-icon.purple{background:rgba(124,110,247,0.15);color:#7c6ef7}
 .card-icon.pink{background:rgba(240,98,146,0.15);color:#f06292}
 .card-icon.teal{background:rgba(77,208,225,0.15);color:#4dd0e1}
@@ -57,13 +87,13 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .card-icon.green{background:rgba(102,187,106,0.15);color:#66bb6a}
 .card-icon.red{background:rgba(239,83,80,0.15);color:#ef5350}
 .card-label{font-size:11px;font-family:'Space Mono',monospace;color:rgba(232,234,246,0.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-.card-value{font-size:17px;font-weight:700;color:#e8eaf6;font-family:'Space Mono',monospace}
+.card-value{font-size:16px;font-weight:700;color:#e8eaf6;font-family:'Space Mono',monospace}
 .card-value.loading{color:rgba(232,234,246,0.2)}
-.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px}
-.btn{border:none;border-radius:16px;padding:16px 12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.3s ease}
+
+.actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.btn{border:none;border-radius:14px;padding:15px 10px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all 0.3s ease}
 .btn-primary{background:linear-gradient(135deg,#7c6ef7,#9c6ef7);color:#fff}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,110,247,0.4)}
-.btn-primary:active{transform:scale(0.98)}
 .btn-danger{background:rgba(240,98,146,0.12);border:1px solid rgba(240,98,146,0.3);color:#f06292}
 .btn-danger:hover{background:rgba(240,98,146,0.2);transform:translateY(-2px)}
 .btn-danger.ringing{animation:ring-pulse 0.6s ease-in-out infinite alternate}
@@ -71,444 +101,444 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .btn-track{background:rgba(77,208,225,0.1);border:1px solid rgba(77,208,225,0.3);color:#4dd0e1}
 .btn-track:hover{background:rgba(77,208,225,0.2);transform:translateY(-2px)}
 .btn-track.active{background:rgba(240,98,146,0.12);border-color:rgba(240,98,146,0.3);color:#f06292}
-.btn-track.active:hover{background:rgba(240,98,146,0.2)}
-.history-section{background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;padding:20px;margin-bottom:24px}
-.section-title{font-size:13px;font-weight:700;color:rgba(232,234,246,0.5);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.history-item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+
+.section-box{background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;padding:20px;margin-bottom:16px}
+.section-title{font-size:12px;font-weight:700;color:rgba(232,234,246,0.5);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.history-item{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
 .history-item:last-child{border-bottom:none}
 .history-dot{width:10px;height:10px;border-radius:50%;background:var(--neon);box-shadow:0 0 8px var(--neon);flex-shrink:0}
 .history-dot.old{background:rgba(232,234,246,0.2);box-shadow:none}
 .history-coords{font-family:'Space Mono',monospace;font-size:12px;color:#e8eaf6;flex:1}
 .history-time{font-size:11px;color:rgba(232,234,246,0.3);font-family:'Space Mono',monospace}
-.share-section{background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;padding:20px}
-.share-box{display:flex;gap:10px;margin-top:12px}
-.share-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(124,110,247,0.2);border-radius:10px;padding:12px 16px;font-family:'Space Mono',monospace;font-size:12px;color:#e8eaf6;outline:none}
+
+/* Firebase share */
+.share-row{display:flex;gap:10px;margin-top:12px}
+.share-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(124,110,247,0.2);border-radius:10px;padding:11px 14px;font-family:'Space Mono',monospace;font-size:11px;color:#e8eaf6;outline:none;min-width:0}
 .share-input::placeholder{color:rgba(232,234,246,0.2)}
-.btn-copy{background:rgba(124,110,247,0.15);border:1px solid rgba(124,110,247,0.3);border-radius:10px;padding:12px 16px;color:#7c6ef7;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700}
-.btn-copy:hover{background:rgba(124,110,247,0.25)}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(20,24,40,0.97);border:1px solid var(--card-border);border-radius:14px;padding:14px 24px;font-size:14px;font-family:'Space Mono',monospace;color:var(--neon3);backdrop-filter:blur(20px);z-index:9999;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;gap:10px;box-shadow:0 20px 60px rgba(0,0,0,0.5);white-space:nowrap}
+.btn-sm{background:rgba(124,110,247,0.15);border:1px solid rgba(124,110,247,0.3);border-radius:10px;padding:11px 14px;color:#7c6ef7;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:5px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.btn-sm:hover{background:rgba(124,110,247,0.25)}
+.btn-sm.green{background:rgba(102,187,106,0.12);border-color:rgba(102,187,106,0.3);color:#66bb6a}
+.btn-sm.green:hover{background:rgba(102,187,106,0.22)}
+.btn-sm.red{background:rgba(239,83,80,0.12);border-color:rgba(239,83,80,0.3);color:#ef5350}
+.live-indicator{display:inline-flex;align-items:center;gap:6px;background:rgba(102,187,106,0.12);border:1px solid rgba(102,187,106,0.3);border-radius:50px;padding:5px 12px;font-size:11px;font-family:'Space Mono',monospace;color:#66bb6a;margin-top:10px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#66bb6a;animation:pulse-dot 1s ease-in-out infinite}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:rgba(20,24,40,0.97);border:1px solid var(--card-border);border-radius:14px;padding:14px 22px;font-size:13px;font-family:'Space Mono',monospace;color:var(--neon3);backdrop-filter:blur(20px);z-index:9999;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;gap:10px;box-shadow:0 20px 60px rgba(0,0,0,0.5);max-width:90vw}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(0.85) saturate(0.8)}
 .leaflet-container{background:#0d1117}
-@media(max-width:600px){
-  .actions{grid-template-columns:1fr 1fr}
-  .cards-grid{grid-template-columns:1fr 1fr}
-  header{flex-direction:column;align-items:flex-start}
-}
-@media(max-width:380px){
-  .actions{grid-template-columns:1fr}
-}
+@media(max-width:600px){.actions{grid-template-columns:1fr 1fr}.cards-grid{grid-template-columns:1fr 1fr}header{flex-direction:column;align-items:flex-start}}
+@media(max-width:380px){.actions{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="bg-orbs">
-  <div class="orb orb1"></div>
-  <div class="orb orb2"></div>
-  <div class="orb orb3"></div>
-</div>
+<div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
 <div class="container">
+
   <header>
     <div class="logo">
       <div class="logo-icon"><i class="ti ti-antenna" style="color:#fff;font-size:20px"></i></div>
       <span class="logo-text">TrackWave</span>
     </div>
-    <div class="status-badge" id="statusBadge">
+    <div class="status-badge">
       <div class="dot" id="statusDot"></div>
       <span id="statusText">En attente...</span>
     </div>
   </header>
 
+  <!-- Bannière mode observateur -->
+  <div class="viewer-banner" id="viewerBanner">
+    <div class="viewer-icon"><i class="ti ti-eye"></i></div>
+    <div class="viewer-text">
+      <div class="viewer-title">Mode Observateur</div>
+      <div class="viewer-sub" id="viewerSub">Connexion en cours...</div>
+    </div>
+    <button class="btn-alarm-remote" id="remoteAlarmBtn" onclick="toggleRemoteAlarm()">
+      <i class="ti ti-bell" id="remoteAlarmIcon"></i>
+      <span id="remoteAlarmText">Alarme</span>
+    </button>
+  </div>
+
   <div class="map-wrapper">
     <div id="map"></div>
     <div class="map-overlay"></div>
-    <div class="map-label">
-      <i class="ti ti-map-pin" style="vertical-align:-2px;margin-right:6px"></i>
-      <span id="mapLabel">Localisation en cours...</span>
-    </div>
-    <div class="track-badge" id="trackBadge">
-      <div class="track-dot"></div>
-      <span id="trackTimer">00:00</span>
-    </div>
+    <div class="map-label"><i class="ti ti-map-pin" style="vertical-align:-2px;margin-right:6px"></i><span id="mapLabel">Localisation en cours...</span></div>
+    <div class="track-badge" id="trackBadge"><div class="track-dot"></div><span id="trackTimer">00:00</span></div>
   </div>
 
   <div class="cards-grid">
-    <div class="card">
-      <div class="card-icon purple"><i class="ti ti-location"></i></div>
-      <div class="card-label">Latitude</div>
-      <div class="card-value loading" id="latVal">--°</div>
-    </div>
-    <div class="card">
-      <div class="card-icon teal"><i class="ti ti-location"></i></div>
-      <div class="card-label">Longitude</div>
-      <div class="card-value loading" id="lonVal">--°</div>
-    </div>
-    <div class="card">
-      <div class="card-icon pink"><i class="ti ti-target-arrow"></i></div>
-      <div class="card-label">Précision</div>
-      <div class="card-value loading" id="accVal">-- m</div>
-    </div>
-    <div class="card">
-      <div class="card-icon amber"><i class="ti ti-clock"></i></div>
-      <div class="card-label">Mis à jour</div>
-      <div class="card-value loading" id="timeVal">--:--</div>
-    </div>
-    <div class="card">
-      <div class="card-icon green"><i class="ti ti-gauge"></i></div>
-      <div class="card-label">Vitesse</div>
-      <div class="card-value loading" id="speedVal">-- km/h</div>
-    </div>
-    <div class="card">
-      <div class="card-icon red"><i class="ti ti-route"></i></div>
-      <div class="card-label">Distance</div>
-      <div class="card-value loading" id="distVal">-- m</div>
-    </div>
+    <div class="card"><div class="card-icon purple"><i class="ti ti-location"></i></div><div class="card-label">Latitude</div><div class="card-value loading" id="latVal">--°</div></div>
+    <div class="card"><div class="card-icon teal"><i class="ti ti-location"></i></div><div class="card-label">Longitude</div><div class="card-value loading" id="lonVal">--°</div></div>
+    <div class="card"><div class="card-icon pink"><i class="ti ti-target-arrow"></i></div><div class="card-label">Précision</div><div class="card-value loading" id="accVal">-- m</div></div>
+    <div class="card"><div class="card-icon amber"><i class="ti ti-clock"></i></div><div class="card-label">Mis à jour</div><div class="card-value loading" id="timeVal">--:--</div></div>
+    <div class="card"><div class="card-icon green"><i class="ti ti-gauge"></i></div><div class="card-label">Vitesse</div><div class="card-value loading" id="speedVal">-- km/h</div></div>
+    <div class="card"><div class="card-icon red"><i class="ti ti-route"></i></div><div class="card-label">Distance</div><div class="card-value loading" id="distVal">-- m</div></div>
   </div>
 
-  <div class="actions">
-    <button class="btn btn-primary" onclick="locateMe()">
-      <i class="ti ti-refresh" style="font-size:17px"></i>
-      Actualiser
-    </button>
-    <button class="btn btn-track" id="trackBtn" onclick="toggleTracking()">
-      <i class="ti ti-player-play" style="font-size:17px" id="trackIcon"></i>
-      <span id="trackText">Tracker</span>
-    </button>
-    <button class="btn btn-danger" id="ringBtn" onclick="toggleRing()">
-      <i class="ti ti-volume" style="font-size:17px" id="ringIcon"></i>
-      <span id="ringText">Sonner</span>
-    </button>
+  <!-- Boutons (cachés en mode viewer) -->
+  <div class="actions" id="ownerActions">
+    <button class="btn btn-primary" onclick="locateMe()"><i class="ti ti-refresh" style="font-size:17px"></i>Actualiser</button>
+    <button class="btn btn-track" id="trackBtn" onclick="toggleTracking()"><i class="ti ti-player-play" style="font-size:17px" id="trackIcon"></i><span id="trackText">Tracker</span></button>
+    <button class="btn btn-danger" id="ringBtn" onclick="toggleRing()"><i class="ti ti-volume" style="font-size:17px" id="ringIcon"></i><span id="ringText">Sonner</span></button>
   </div>
 
-  <div class="history-section">
-    <div class="section-title">
-      <i class="ti ti-history" style="font-size:16px;color:var(--neon)"></i>
-      Historique des positions
+  <!-- Historique -->
+  <div class="section-box">
+    <div class="section-title"><i class="ti ti-history" style="font-size:15px;color:var(--neon)"></i>Historique</div>
+    <div id="historyList"><div style="text-align:center;padding:16px;font-size:12px;color:rgba(232,234,246,0.25);font-family:'Space Mono',monospace">Aucune position enregistrée</div></div>
+  </div>
+
+  <!-- Partage Firebase Live -->
+  <div class="section-box" id="shareSection">
+    <div class="section-title"><i class="ti ti-live-photo" style="font-size:15px;color:var(--neon2)"></i>Partage Live <span style="font-size:10px;background:rgba(240,98,146,0.15);border:1px solid rgba(240,98,146,0.3);border-radius:4px;padding:2px 6px;color:#f06292;margin-left:6px">FIREBASE</span></div>
+    <p style="font-size:12px;color:rgba(232,234,246,0.4);font-family:'Space Mono',monospace;margin-bottom:12px">Génère un lien — ton ami voit ta position en temps réel + peut déclencher l'alarme à distance.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn-sm green" onclick="startLiveShare()"><i class="ti ti-broadcast" style="font-size:14px"></i>Démarrer le live</button>
+      <button class="btn-sm red" onclick="stopLiveShare()" id="stopShareBtn" style="display:none"><i class="ti ti-broadcast-off" style="font-size:14px"></i>Arrêter</button>
     </div>
-    <div id="historyList">
-      <div style="text-align:center;padding:20px;font-size:13px;color:rgba(232,234,246,0.25);font-family:'Space Mono',monospace">
-        Aucune position enregistrée
+    <div id="liveShareBox" style="display:none;margin-top:14px">
+      <div class="live-indicator"><div class="live-dot"></div>Session active — position envoyée en temps réel</div>
+      <div class="share-row" style="margin-top:10px">
+        <input class="share-input" id="liveShareInput" readonly placeholder="Lien de partage...">
+        <button class="btn-sm" onclick="copyLiveLink()"><i class="ti ti-copy" style="font-size:13px"></i>Copier</button>
       </div>
     </div>
   </div>
 
-  <div class="share-section">
-    <div class="section-title">
-      <i class="ti ti-share" style="font-size:16px;color:var(--neon2)"></i>
-      Partager ma position
-    </div>
-    <div class="share-box">
-      <input class="share-input" id="shareInput" placeholder="Clique sur Actualiser d'abord..." readonly>
-      <button class="btn-copy" onclick="copyShare()">
-        <i class="ti ti-copy" style="font-size:15px"></i>
-        Copier
-      </button>
-    </div>
-  </div>
 </div>
 
-<div class="toast" id="toast">
-  <i class="ti ti-check" style="font-size:16px"></i>
-  <span id="toastMsg">Position enregistrée</span>
-</div>
+<div class="toast" id="toast"><i class="ti ti-check" style="font-size:15px"></i><span id="toastMsg">OK</span></div>
 
 <script>
-const map = L.map('map', {zoomControl: false, attributionControl: false}).setView([14.6928, 17.4467], 5);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(map);
-L.control.zoom({position: 'bottomright'}).addTo(map);
+// ── MAP ──
+const map = L.map('map',{zoomControl:false,attributionControl:false}).setView([14.6928,17.4467],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+L.control.zoom({position:'bottomright'}).addTo(map);
 
-let marker = null;
-let circle = null;
-let isRinging = false;
-let audioCtx = null;
-let history = [];
-let currentLat = null;
-let currentLon = null;
+let marker=null,circle=null,isRinging=false,audioCtx=null;
+let isTracking=false,watchId=null,trackPoints=[],polyline=null;
+let totalDistance=0,trackStartTime=null,timerInterval=null;
+let lastLat=null,lastLon=null,currentLat=null,currentLon=null;
+let history=[];
 
-// Tracking
-let isTracking = false;
-let watchId = null;
-let trackPoints = [];
-let polyline = null;
-let totalDistance = 0;
-let trackStartTime = null;
-let timerInterval = null;
-let lastLat = null;
-let lastLon = null;
+// Firebase globals (injectés par le module ES)
+let db,fbRef,fbSet,fbOnValue,fbRemove;
 
-const customIcon = L.divIcon({
-  html: `<div style="width:16px;height:16px;background:#7c6ef7;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(124,110,247,0.3)"></div>`,
-  className: '', iconSize: [16, 16], iconAnchor: [8, 8]
-});
+// Mode viewer
+let isViewer=false;
+let sessionId=null;
+let liveShareActive=false;
+let liveWatchId=null;
+let remoteAlarmActive=false;
 
-const trackIcon = L.divIcon({
-  html: `<div style="width:18px;height:18px;background:#f06292;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 5px rgba(240,98,146,0.3);animation:none"></div>`,
-  className: '', iconSize: [18, 18], iconAnchor: [9, 9]
-});
+const customIcon=L.divIcon({html:`<div style="width:16px;height:16px;background:#7c6ef7;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(124,110,247,0.3)"></div>`,className:'',iconSize:[16,16],iconAnchor:[8,8]});
+const trackIconDef=L.divIcon({html:`<div style="width:18px;height:18px;background:#f06292;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 5px rgba(240,98,146,0.3)"></div>`,className:'',iconSize:[18,18],iconAnchor:[9,9]});
+const viewerIconDef=L.divIcon({html:`<div style="width:18px;height:18px;background:#4dd0e1;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 5px rgba(77,208,225,0.3)"></div>`,className:'',iconSize:[18,18],iconAnchor:[9,9]});
 
-function showToast(msg, color) {
-  const t = document.getElementById('toast');
-  document.getElementById('toastMsg').textContent = msg;
-  t.style.color = color || '#4dd0e1';
+function showToast(msg,color){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.style.color=color||'#4dd0e1';
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(()=>t.classList.remove('show'),3500);
 }
 
-function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
-function formatDistance(m) {
-  if (m < 1000) return Math.round(m) + ' m';
-  return (m / 1000).toFixed(2) + ' km';
+function formatDistance(m){return m<1000?Math.round(m)+' m':(m/1000).toFixed(2)+' km'}
+
+function updateCards(lat,lon,acc,speed){
+  document.getElementById('latVal').textContent=lat.toFixed(5)+'°';
+  document.getElementById('lonVal').textContent=lon.toFixed(5)+'°';
+  document.getElementById('accVal').textContent=Math.round(acc)+' m';
+  const now=new Date();
+  document.getElementById('timeVal').textContent=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  if(speed!=null) document.getElementById('speedVal').textContent=(speed*3.6).toFixed(1)+' km/h';
+  ['latVal','lonVal','accVal','timeVal','speedVal'].forEach(id=>document.getElementById(id).classList.remove('loading'));
 }
 
-function updateCards(lat, lon, acc, speed) {
-  document.getElementById('latVal').textContent = lat.toFixed(5) + '°';
-  document.getElementById('lonVal').textContent = lon.toFixed(5) + '°';
-  document.getElementById('accVal').textContent = Math.round(acc) + ' m';
-  const now = new Date();
-  document.getElementById('timeVal').textContent =
-    now.getHours().toString().padStart(2,'0') + ':' +
-    now.getMinutes().toString().padStart(2,'0');
-
-  if (speed !== null && speed !== undefined) {
-    const kmh = (speed * 3.6).toFixed(1);
-    document.getElementById('speedVal').textContent = kmh + ' km/h';
-    document.getElementById('speedVal').classList.remove('loading');
-  }
-
-  ['latVal','lonVal','accVal','timeVal'].forEach(id =>
-    document.getElementById(id).classList.remove('loading')
-  );
-}
-
-function addHistory(lat, lon) {
-  const now = new Date();
-  const time = now.getHours().toString().padStart(2,'0') + ':' +
-               now.getMinutes().toString().padStart(2,'0') + ':' +
-               now.getSeconds().toString().padStart(2,'0');
-  history.unshift({lat, lon, time});
-  if (history.length > 5) history.pop();
-  document.getElementById('historyList').innerHTML = history.map((h, i) => `
+function addHistory(lat,lon){
+  const now=new Date();
+  const time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+  history.unshift({lat,lon,time});
+  if(history.length>5)history.pop();
+  document.getElementById('historyList').innerHTML=history.map((h,i)=>`
     <div class="history-item">
-      <div class="history-dot ${i > 0 ? 'old' : ''}"></div>
+      <div class="history-dot ${i>0?'old':''}"></div>
       <div class="history-coords">${h.lat.toFixed(4)}° / ${h.lon.toFixed(4)}°</div>
       <div class="history-time">${h.time}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-function updateShareLink(lat, lon) {
-  document.getElementById('shareInput').value =
-    `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}&zoom=16`;
-}
-
-function copyShare() {
-  const input = document.getElementById('shareInput');
-  if (!input.value) { showToast('Localise-toi d\'abord !', '#f06292'); return; }
-  navigator.clipboard.writeText(input.value)
-    .then(() => showToast('✓ Lien copié !'))
-    .catch(() => { input.select(); document.execCommand('copy'); showToast('✓ Lien copié !'); });
-}
-
-function locateMe() {
-  document.getElementById('statusText').textContent = 'Localisation...';
-  document.getElementById('mapLabel').textContent = 'Signal GPS en cours...';
-  if (!navigator.geolocation) { showToast('GPS non disponible', '#f06292'); return; }
-  navigator.geolocation.getCurrentPosition(pos => {
-    const {latitude: lat, longitude: lon, accuracy: acc, speed} = pos.coords;
-    currentLat = lat; currentLon = lon;
-    map.setView([lat, lon], 15, {animate: true});
-    if (marker) map.removeLayer(marker);
-    if (circle) map.removeLayer(circle);
-    circle = L.circle([lat, lon], {radius: acc, color:'#7c6ef7', fillColor:'#7c6ef7', fillOpacity:0.08, weight:1}).addTo(map);
-    marker = L.marker([lat, lon], {icon: customIcon}).addTo(map);
-    updateCards(lat, lon, acc, speed);
-    addHistory(lat, lon);
-    updateShareLink(lat, lon);
-    document.getElementById('statusText').textContent = 'Signal actif';
-    document.getElementById('mapLabel').textContent = 'Position détectée';
+function locateMe(){
+  document.getElementById('statusText').textContent='Localisation...';
+  document.getElementById('mapLabel').textContent='Signal GPS en cours...';
+  if(!navigator.geolocation){showToast('GPS non disponible','#f06292');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const{latitude:lat,longitude:lon,accuracy:acc,speed}=pos.coords;
+    currentLat=lat;currentLon=lon;
+    map.setView([lat,lon],15,{animate:true});
+    if(marker)map.removeLayer(marker);
+    if(circle)map.removeLayer(circle);
+    circle=L.circle([lat,lon],{radius:acc,color:'#7c6ef7',fillColor:'#7c6ef7',fillOpacity:0.08,weight:1}).addTo(map);
+    marker=L.marker([lat,lon],{icon:customIcon}).addTo(map);
+    updateCards(lat,lon,acc,speed);
+    addHistory(lat,lon);
+    document.getElementById('statusText').textContent='Signal actif';
+    document.getElementById('mapLabel').textContent='Position détectée';
     showToast('✓ Position mise à jour');
-  }, () => {
-    document.getElementById('statusText').textContent = 'Erreur GPS';
-    showToast('Accès à la position refusé', '#f06292');
-  }, {enableHighAccuracy: true, timeout: 10000});
+  },()=>{
+    document.getElementById('statusText').textContent='Erreur GPS';
+    showToast('Accès à la position refusé','#f06292');
+  },{enableHighAccuracy:true,timeout:10000});
 }
 
-// ── TRACKING TEMPS RÉEL ──
-function toggleTracking() {
-  if (!isTracking) startTracking(); else stopTracking();
-}
+// ── TRACKING LOCAL ──
+function toggleTracking(){if(!isTracking)startTracking();else stopTracking();}
 
-function startTracking() {
-  if (!navigator.geolocation) { showToast('GPS non disponible', '#f06292'); return; }
-  isTracking = true;
-  trackPoints = [];
-  totalDistance = 0;
-  lastLat = null; lastLon = null;
-  trackStartTime = Date.now();
-
-  // UI
-  const btn = document.getElementById('trackBtn');
+function startTracking(){
+  if(!navigator.geolocation){showToast('GPS non disponible','#f06292');return;}
+  isTracking=true;trackPoints=[];totalDistance=0;lastLat=null;lastLon=null;
+  trackStartTime=Date.now();
+  let rawBuffer=[];
+  const btn=document.getElementById('trackBtn');
   btn.classList.add('active');
-  document.getElementById('trackIcon').className = 'ti ti-player-stop';
-  document.getElementById('trackText').textContent = 'Stop';
+  document.getElementById('trackIcon').className='ti ti-player-stop';
+  document.getElementById('trackText').textContent='Stop';
   document.getElementById('trackBadge').classList.add('visible');
   document.getElementById('statusDot').classList.add('tracking');
-  document.getElementById('statusText').textContent = 'Tracking actif';
+  document.getElementById('statusText').textContent='Tracking actif';
   document.getElementById('distVal').classList.remove('loading');
-
-  // Timer affiché sur la carte
-  timerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - trackStartTime) / 1000);
-    const m = Math.floor(elapsed / 60).toString().padStart(2,'0');
-    const s = (elapsed % 60).toString().padStart(2,'0');
-    document.getElementById('trackTimer').textContent = m + ':' + s;
-  }, 1000);
-
-  // Supprimer ancien tracé
-  if (polyline) { map.removeLayer(polyline); polyline = null; }
-  if (marker) { map.removeLayer(marker); marker = null; }
-  if (circle) { map.removeLayer(circle); circle = null; }
-
-  // Buffer de lissage (moyenne glissante sur 4 points bruts)
-  let rawBuffer = [];
-
-  // Écoute continue du GPS
-  watchId = navigator.geolocation.watchPosition(pos => {
-    const {latitude: lat, longitude: lon, accuracy: acc, speed} = pos.coords;
-    currentLat = lat; currentLon = lon;
-
-    // 1. Rejeter si précision GPS trop faible (> 30m = signal trop imprécis)
-    if (acc > 30) {
-      document.getElementById('mapLabel').textContent = 'Signal faible (' + Math.round(acc) + 'm)...';
-      updateCards(lat, lon, acc, speed);
-      return;
+  timerInterval=setInterval(()=>{
+    const e=Math.floor((Date.now()-trackStartTime)/1000);
+    document.getElementById('trackTimer').textContent=Math.floor(e/60).toString().padStart(2,'0')+':'+(e%60).toString().padStart(2,'0');
+  },1000);
+  if(polyline){map.removeLayer(polyline);polyline=null;}
+  if(marker){map.removeLayer(marker);marker=null;}
+  if(circle){map.removeLayer(circle);circle=null;}
+  watchId=navigator.geolocation.watchPosition(pos=>{
+    const{latitude:lat,longitude:lon,accuracy:acc,speed}=pos.coords;
+    currentLat=lat;currentLon=lon;
+    if(acc>30){document.getElementById('mapLabel').textContent='Signal faible ('+Math.round(acc)+'m)...';updateCards(lat,lon,acc,speed);return;}
+    rawBuffer.push([lat,lon]);if(rawBuffer.length>4)rawBuffer.shift();
+    const sLat=rawBuffer.reduce((s,p)=>s+p[0],0)/rawBuffer.length;
+    const sLon=rawBuffer.reduce((s,p)=>s+p[1],0)/rawBuffer.length;
+    if(lastLat!==null){
+      const d=haversine(lastLat,lastLon,sLat,sLon);
+      if(d<8){updateCards(lat,lon,acc,speed);return;}
+      totalDistance+=d;
+      document.getElementById('distVal').textContent=formatDistance(totalDistance);
     }
-
-    // 2. Lissage : moyenne glissante sur les 4 derniers points bruts
-    rawBuffer.push([lat, lon]);
-    if (rawBuffer.length > 4) rawBuffer.shift();
-    const smoothLat = rawBuffer.reduce((s, p) => s + p[0], 0) / rawBuffer.length;
-    const smoothLon = rawBuffer.reduce((s, p) => s + p[1], 0) / rawBuffer.length;
-
-    // 3. Filtre distance minimale : n'ajoute un point que si déplacement réel >= 8m
-    const MIN_DIST = 8;
-    if (lastLat !== null) {
-      const d = haversine(lastLat, lastLon, smoothLat, smoothLon);
-      if (d < MIN_DIST) {
-        // Pas assez de mouvement — on met à jour les cards mais pas le tracé
-        updateCards(lat, lon, acc, speed);
-        return;
-      }
-      totalDistance += d;
-      document.getElementById('distVal').textContent = formatDistance(totalDistance);
-    }
-
-    lastLat = smoothLat; lastLon = smoothLon;
-    trackPoints.push([smoothLat, smoothLon]);
-
-    // Tracé du parcours (points lissés uniquement)
-    if (polyline) map.removeLayer(polyline);
-    polyline = L.polyline(trackPoints, {
-      color: '#f06292',
-      weight: 4,
-      opacity: 0.9,
-      lineJoin: 'round'
-    }).addTo(map);
-
-    // Point de départ
-    if (trackPoints.length === 1) {
-      L.circleMarker(trackPoints[0], {
-        radius: 6, color: '#4dd0e1', fillColor: '#4dd0e1', fillOpacity: 1, weight: 2
-      }).addTo(map).bindTooltip('Départ', {permanent: false, className: ''});
-    }
-
-    // Marqueur position actuelle
-    if (marker) map.removeLayer(marker);
-    marker = L.marker([smoothLat, smoothLon], {icon: trackIcon}).addTo(map);
-    map.panTo([smoothLat, smoothLon], {animate: true});
-
-    updateCards(lat, lon, acc, speed);
-    addHistory(lat, lon);
-    updateShareLink(lat, lon);
-    document.getElementById('mapLabel').textContent = 'Tracking en cours...';
-
-  }, () => {
-    showToast('Erreur GPS pendant le tracking', '#f06292');
-  }, {enableHighAccuracy: true, maximumAge: 0, timeout: 15000});
-
-  showToast('▶ Tracking démarré', '#4dd0e1');
+    lastLat=sLat;lastLon=sLon;trackPoints.push([sLat,sLon]);
+    if(polyline)map.removeLayer(polyline);
+    polyline=L.polyline(trackPoints,{color:'#f06292',weight:4,opacity:0.9,lineJoin:'round'}).addTo(map);
+    if(trackPoints.length===1)L.circleMarker(trackPoints[0],{radius:6,color:'#4dd0e1',fillColor:'#4dd0e1',fillOpacity:1,weight:2}).addTo(map).bindTooltip('Départ');
+    if(marker)map.removeLayer(marker);
+    marker=L.marker([sLat,sLon],{icon:trackIconDef}).addTo(map);
+    map.panTo([sLat,sLon],{animate:true});
+    updateCards(lat,lon,acc,speed);addHistory(lat,lon);
+    document.getElementById('mapLabel').textContent='Tracking en cours...';
+  },()=>showToast('Erreur GPS','#f06292'),{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+  showToast('▶ Tracking démarré','#4dd0e1');
 }
 
-function stopTracking() {
-  isTracking = false;
-  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-
-  // UI
-  const btn = document.getElementById('trackBtn');
-  btn.classList.remove('active');
-  document.getElementById('trackIcon').className = 'ti ti-player-play';
-  document.getElementById('trackText').textContent = 'Tracker';
+function stopTracking(){
+  isTracking=false;
+  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;}
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  document.getElementById('trackBtn').classList.remove('active');
+  document.getElementById('trackIcon').className='ti ti-player-play';
+  document.getElementById('trackText').textContent='Tracker';
   document.getElementById('trackBadge').classList.remove('visible');
   document.getElementById('statusDot').classList.remove('tracking');
-  document.getElementById('statusText').textContent = 'Signal actif';
-  document.getElementById('mapLabel').textContent = 'Tracking terminé';
-
-  // Résumé
-  const elapsed = Math.floor((Date.now() - trackStartTime) / 1000);
-  const m = Math.floor(elapsed / 60);
-  const s = elapsed % 60;
-  showToast(`■ Stop — ${formatDistance(totalDistance)} en ${m}m${s}s`, '#f06292');
+  document.getElementById('statusText').textContent='Signal actif';
+  document.getElementById('mapLabel').textContent='Tracking terminé';
+  const e=Math.floor((Date.now()-trackStartTime)/1000);
+  showToast('■ Stop — '+formatDistance(totalDistance)+' en '+Math.floor(e/60)+'m'+(e%60)+'s','#f06292');
 }
 
-// ── ALARME ──
-function toggleRing() {
-  if (!isRinging) startRing(); else stopRing();
-}
-
-function startRing() {
-  isRinging = true;
-  document.getElementById('ringText').textContent = 'Arrêter';
-  document.getElementById('ringIcon').className = 'ti ti-volume-off';
+// ── ALARME LOCALE ──
+function toggleRing(){if(!isRinging)startRing();else stopRing();}
+function startRing(){
+  isRinging=true;
+  document.getElementById('ringText').textContent='Arrêter';
+  document.getElementById('ringIcon').className='ti ti-volume-off';
   document.getElementById('ringBtn').classList.add('ringing');
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [880, 1100, 880, 1320, 1100, 880];
-    let i = 0;
-    function playNote() {
-      if (!isRinging) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.frequency.setValueAtTime(notes[i % notes.length], audioCtx.currentTime);
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-      osc.start(); osc.stop(audioCtx.currentTime + 0.3);
-      i++;
-      if (isRinging) setTimeout(playNote, 350);
+  try{
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const notes=[880,1100,880,1320,1100,880];let i=0;
+    function playNote(){
+      if(!isRinging)return;
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.connect(g);g.connect(audioCtx.destination);
+      o.frequency.setValueAtTime(notes[i%notes.length],audioCtx.currentTime);
+      o.type='sine';g.gain.setValueAtTime(0.35,audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.3);
+      o.start();o.stop(audioCtx.currentTime+0.3);i++;
+      if(isRinging)setTimeout(playNote,350);
     }
-    playNote();
-    showToast('Alarme activée', '#f06292');
-  } catch(e) { showToast('Audio non disponible', '#f06292'); }
+    playNote();showToast('Alarme activée','#f06292');
+  }catch(e){showToast('Audio non disponible','#f06292');}
 }
-
-function stopRing() {
-  isRinging = false;
-  document.getElementById('ringText').textContent = 'Sonner';
-  document.getElementById('ringIcon').className = 'ti ti-volume';
+function stopRing(){
+  isRinging=false;
+  document.getElementById('ringText').textContent='Sonner';
+  document.getElementById('ringIcon').className='ti ti-volume';
   document.getElementById('ringBtn').classList.remove('ringing');
-  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  if(audioCtx){audioCtx.close();audioCtx=null;}
   showToast('Alarme arrêtée');
 }
 
-locateMe();
+// ── FIREBASE LIVE SHARE ──
+function generateSessionId(){
+  return Math.random().toString(36).substr(2,8).toUpperCase();
+}
+
+function startLiveShare(){
+  if(!db){showToast('Firebase non prêt, patiente...','#f06292');return;}
+  if(!navigator.geolocation){showToast('GPS requis','#f06292');return;}
+
+  sessionId=generateSessionId();
+  liveShareActive=true;
+
+  const shareUrl=window.location.href.split('?')[0]+'?watch='+sessionId;
+  document.getElementById('liveShareInput').value=shareUrl;
+  document.getElementById('liveShareBox').style.display='block';
+  document.getElementById('stopShareBtn').style.display='flex';
+  showToast('📡 Live démarré ! Lien prêt à partager','#66bb6a');
+
+  // Écouter si l'observateur déclenche l'alarme
+  const alarmRef=fbRef(db,'sessions/'+sessionId+'/alarm');
+  fbOnValue(alarmRef,snap=>{
+    const val=snap.val();
+    if(val===true && !isRinging){
+      startRing();
+      showToast('🔔 Alarme déclenchée à distance !','#f06292');
+    } else if(val===false && isRinging){
+      stopRing();
+    }
+  });
+
+  // Envoyer la position en continu
+  liveWatchId=navigator.geolocation.watchPosition(pos=>{
+    const{latitude:lat,longitude:lon,accuracy:acc}=pos.coords;
+    const now=new Date();
+    fbSet(fbRef(db,'sessions/'+sessionId+'/location'),{
+      lat,lon,acc,
+      time:now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0'),
+      ts:Date.now()
+    });
+    if(marker)map.removeLayer(marker);
+    if(circle)map.removeLayer(circle);
+    circle=L.circle([lat,lon],{radius:acc,color:'#7c6ef7',fillColor:'#7c6ef7',fillOpacity:0.08,weight:1}).addTo(map);
+    marker=L.marker([lat,lon],{icon:customIcon}).addTo(map);
+    map.setView([lat,lon],15,{animate:true});
+    updateCards(lat,lon,acc,null);
+    addHistory(lat,lon);
+    document.getElementById('mapLabel').textContent='Live actif — position envoyée';
+    document.getElementById('statusText').textContent='Live actif';
+  },()=>showToast('Erreur GPS','#f06292'),{enableHighAccuracy:true,maximumAge:0});
+}
+
+function stopLiveShare(){
+  liveShareActive=false;
+  if(liveWatchId!==null){navigator.geolocation.clearWatch(liveWatchId);liveWatchId=null;}
+  if(db && sessionId){
+    fbRemove(fbRef(db,'sessions/'+sessionId));
+  }
+  document.getElementById('liveShareBox').style.display='none';
+  document.getElementById('stopShareBtn').style.display='none';
+  document.getElementById('statusText').textContent='Signal actif';
+  document.getElementById('mapLabel').textContent='Live arrêté';
+  sessionId=null;
+  showToast('Live arrêté — session supprimée');
+}
+
+function copyLiveLink(){
+  const val=document.getElementById('liveShareInput').value;
+  navigator.clipboard.writeText(val).then(()=>showToast('✓ Lien copié !')).catch(()=>{
+    document.getElementById('liveShareInput').select();
+    document.execCommand('copy');showToast('✓ Lien copié !');
+  });
+}
+
+// ── MODE OBSERVATEUR ──
+function initViewerMode(sid){
+  isViewer=true;
+  sessionId=sid;
+  document.getElementById('ownerActions').style.display='none';
+  document.getElementById('shareSection').style.display='none';
+  document.getElementById('viewerBanner').classList.add('visible');
+  document.getElementById('viewerSub').textContent='Session : '+sid+' — En attente de position...';
+  document.getElementById('statusText').textContent='Observation...';
+  document.getElementById('mapLabel').textContent='En attente du signal...';
+
+  if(!db){
+    window.addEventListener('firebase-ready',()=>listenToSession(sid),{once:true});
+  } else {
+    listenToSession(sid);
+  }
+}
+
+function listenToSession(sid){
+  const locRef=fbRef(db,'sessions/'+sid+'/location');
+  fbOnValue(locRef,snap=>{
+    const d=snap.val();
+    if(!d){
+      document.getElementById('viewerSub').textContent='Session introuvable ou terminée';
+      return;
+    }
+    document.getElementById('viewerSub').textContent='Session '+sid+' • MàJ : '+d.time;
+    document.getElementById('statusText').textContent='Signal reçu';
+    document.getElementById('mapLabel').textContent='Position live reçue';
+    if(marker)map.removeLayer(marker);
+    if(circle)map.removeLayer(circle);
+    circle=L.circle([d.lat,d.lon],{radius:d.acc,color:'#4dd0e1',fillColor:'#4dd0e1',fillOpacity:0.08,weight:1}).addTo(map);
+    marker=L.marker([d.lat,d.lon],{icon:viewerIconDef}).addTo(map);
+    map.setView([d.lat,d.lon],15,{animate:true});
+    updateCards(d.lat,d.lon,d.acc,null);
+    addHistory(d.lat,d.lon);
+  });
+}
+
+function toggleRemoteAlarm(){
+  if(!db||!sessionId)return;
+  remoteAlarmActive=!remoteAlarmActive;
+  fbSet(fbRef(db,'sessions/'+sessionId+'/alarm'),remoteAlarmActive);
+  const btn=document.getElementById('remoteAlarmBtn');
+  document.getElementById('remoteAlarmIcon').className=remoteAlarmActive?'ti ti-bell-off':'ti ti-bell';
+  document.getElementById('remoteAlarmText').textContent=remoteAlarmActive?'Arrêter':'Alarme';
+  if(remoteAlarmActive){btn.classList.add('active');showToast('🔔 Alarme envoyée à distance !','#f06292');}
+  else{btn.classList.remove('active');showToast('Alarme arrêtée à distance');}
+}
+
+// ── INIT ──
+window.addEventListener('firebase-ready',()=>{
+  db=window._fbDb;
+  fbRef=window._fbRef;
+  fbSet=window._fbSet;
+  fbOnValue=window._fbOnValue;
+  fbRemove=window._fbRemove;
+
+  // Vérifier si on est en mode observateur
+  const params=new URLSearchParams(window.location.search);
+  const watchSession=params.get('watch');
+  if(watchSession){
+    initViewerMode(watchSession);
+  } else {
+    locateMe();
+  }
+});
+
+// Si Firebase tarde, lancer quand même la localisation
+setTimeout(()=>{
+  const params=new URLSearchParams(window.location.search);
+  if(!params.get('watch') && !currentLat){locateMe();}
+},2000);
 </script>
 </body>
 </html>
